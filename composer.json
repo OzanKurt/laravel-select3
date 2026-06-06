@@ -1,0 +1,41 @@
+{
+    "name": "ozankurt/laravel-select3",
+    "description": "Laravel companion for @ozankurt/select3: a fluent builder, Blade component, and AJAX search endpoint for rich, server-driven select3 dropdowns.",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        { "name": "Ozan Kurt" }
+    ],
+    "keywords": ["laravel", "select3", "select2", "select", "dropdown", "blade", "form", "combobox"],
+    "homepage": "https://github.com/OzanKurt/laravel-select3",
+    "require": {
+        "php": "^8.2",
+        "illuminate/support": "^11.0 || ^12.0 || ^13.0",
+        "illuminate/contracts": "^11.0 || ^12.0 || ^13.0"
+    },
+    "require-dev": {
+        "pestphp/pest": "^3.0 || ^4.0"
+    },
+    "autoload": {
+        "psr-4": { "Ozankurt\\Select3\\": "src/" }
+    },
+    "autoload-dev": {
+        "psr-4": { "Ozankurt\\Select3\\Tests\\": "tests/" }
+    },
+    "extra": {
+        "laravel": {
+            "providers": ["Ozankurt\\Select3\\Select3ServiceProvider"]
+        }
+    },
+    "scripts": {
+        "test": "pest"
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true,
+    "config": {
+        "sort-packages": true,
+        "allow-plugins": {
+            "pestphp/pest-plugin": true
+        }
+    }
+}
