@@ -130,3 +130,21 @@ it('renders a disabled option', function () {
     $html = Builder::make('c')->option('a', 'A', ['disabled' => true])->toHtml();
     expect($html)->toContain('<option value="a" disabled>A</option>');
 });
+
+it('serializes search knobs into data-s3-config', function () {
+    $html = Builder::make('c')
+        ->fuzzy()->searchGroups()->debounce(300)->minChars(2)->maxRender(50)->searchField(['name', 'email'])
+        ->toHtml();
+
+    preg_match('/data-s3-config="([^"]*)"/', $html, $m);
+    $cfg = json_decode(html_entity_decode($m[1], ENT_QUOTES), true);
+
+    expect($cfg)->toMatchArray([
+        'fuzzy' => true,
+        'searchGroups' => true,
+        'debounce' => 300,
+        'minChars' => 2,
+        'maxRender' => 50,
+        'searchField' => ['name', 'email'],
+    ]);
+});

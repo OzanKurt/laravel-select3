@@ -21,9 +21,12 @@ class Select3Search
 {
     /** @var list<string> */
     protected array $searchable = [];
+    /** @var list<string> */
+    protected array $fulltext = [];
     protected string|Closure $label = 'name';
     protected string $value = 'id';
     protected ?Closure $extra = null;
+    protected string|Closure|null $group = null;
     protected int $perPage = 20;
 
     public function __construct(protected mixed $query) {}
@@ -37,6 +40,25 @@ class Select3Search
     public function searchable(array $columns): static
     {
         $this->searchable = $columns;
+        return $this;
+    }
+
+    /**
+     * Use a MySQL/PostgreSQL FULLTEXT match on these columns instead of LIKE.
+     * Requires a fulltext index. Takes precedence over searchable() when set.
+     *
+     * @param list<string> $columns
+     */
+    public function fulltext(array $columns): static
+    {
+        $this->fulltext = $columns;
+        return $this;
+    }
+
+    /** Group results (column or closure) so the JS renders remote <optgroup>s. */
+    public function group(string|Closure $group): static
+    {
+        $this->group = $group;
         return $this;
     }
 
@@ -77,15 +99,20 @@ class Select3Search
         $query = clone $this->query;
         $q = trim($q);
 
-        if ($q !== '' && $this->searchable !== []) {
-            // Escape LIKE wildcards so a query of "%" or "_" can't broaden the
-            // match to every row (default escape char "\" works on MySQL/PgSQL/SQLite).
-            $escaped = str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $q);
-            $query->where(function ($sub) use ($escaped): void {
-                foreach ($this->searchable as $column) {
-                    $sub->orWhere($column, 'like', '%' . $escaped . '%');
-                }
-            });
+        if ($q !== '') {
+            if ($this->fulltext !== []) {
+                // Fulltext (requires an index); takes precedence over LIKE.
+                $query->whereFullText($this->fulltext, $q);
+            } elseif ($this->searchable !== []) {
+                // Escape LIKE wildcards so a query of "%" or "_" can't broaden the
+                // match to every row (default escape "\" works on MySQL/PgSQL/SQLite).
+                $escaped = str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $q);
+                $query->where(function ($sub) use ($escaped): void {
+                    foreach ($this->searchable as $column) {
+                        $sub->orWhere($column, 'like', '%' . $escaped . '%');
+                    }
+                });
+            }
         }
 
         $offset = max(0, ($page - 1) * $this->perPage);
@@ -113,6 +140,12 @@ class Select3Search
                     'value' => (string) data_get($model, $this->value),
                     'label' => (string) $label,
                 ];
+
+                if ($this->group !== null) {
+                    $row['group'] = (string) ($this->group instanceof Closure
+                        ? ($this->group)($model)
+                        : data_get($model, $this->group));
+                }
 
                 if ($this->extra !== null) {
                     $row = array_merge($row, (array) ($this->extra)($model));

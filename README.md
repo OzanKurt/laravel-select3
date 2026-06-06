@@ -41,6 +41,10 @@ echo Select3::make('user_id')
 Renders a native `<select data-select3 data-s3-config="{…}">` with `<option>`s
 carrying `data-icon` / `data-image` / `data-description` / `data-badge`.
 
+Tune search + pagination on the builder (all flow into `data-s3-config`):
+`->fuzzy()`, `->searchGroups()`, `->searchField(['name', 'email'])`,
+`->debounce(300)`, `->minChars(2)`, `->maxRender(50)`, `->theme('bootstrap5')`.
+
 ## Blade component
 
 ```blade
@@ -66,6 +70,10 @@ Route::get('/users/search', function (Request $request) {
 Returns `{ "results": [{ "value", "label", "image", "description" }], "hasMore": bool }` —
 exactly the shape select3's AJAX adapter consumes. Point the builder at it with
 `->ajax(route('users.search'))`.
+
+Swap `->searchable([...])` for `->fulltext(['name', 'bio'])` to use a FULLTEXT
+index instead of LIKE, and add `->group('team')` (column or closure) to return
+grouped results that the JS renders as `<optgroup>`s.
 
 ## The JS enhancer contract
 

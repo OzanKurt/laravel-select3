@@ -40,6 +40,13 @@ class FakeQuery
         return $this;
     }
 
+    /** @param list<string> $columns */
+    public function whereFullText(array $columns, string $value): static
+    {
+        $this->log->fullText = [$columns, $value];
+        return $this;
+    }
+
     public function get(): Collection
     {
         return $this->rows;
@@ -51,6 +58,7 @@ function freshLog(): stdClass
     $log = new stdClass();
     $log->orWhere = [];
     $log->whereCalled = false;
+    $log->fullText = null;
     return $log;
 }
 
@@ -101,4 +109,13 @@ it('clamps perPage to at least 1', function () {
 
 it('throws when get() is called without an object query', function () {
     expect(fn () => Select3Search::make(null)->get('x'))->toThrow(InvalidArgumentException::class);
+});
+
+it('uses whereFullText (not LIKE) when fulltext columns are set', function () {
+    $log = freshLog();
+    Select3Search::make(new FakeQuery(collect([]), $log))
+        ->fulltext(['title', 'body'])->get('hello', 1);
+
+    expect($log->fullText)->toBe([['title', 'body'], 'hello']);
+    expect($log->whereCalled)->toBeFalse();
 });

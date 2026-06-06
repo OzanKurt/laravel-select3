@@ -47,3 +47,19 @@ it('accepts a closure label', function () {
 
     expect($out['results'][0]['label'])->toBe('SARA');
 });
+
+it('adds a group field from a column when group() is set', function () {
+    $out = Select3Search::make(null)
+        ->label('name')->value('id')->group('category')->perPage(10)
+        ->shape(collect([['id' => 1, 'name' => 'Apple', 'category' => 'Fruit']]));
+
+    expect($out['results'][0])->toEqual(['value' => '1', 'label' => 'Apple', 'group' => 'Fruit']);
+});
+
+it('supports a closure group', function () {
+    $out = Select3Search::make(null)
+        ->label('name')->value('id')->group(fn ($m) => strtoupper($m['category']))->perPage(10)
+        ->shape(collect([['id' => 1, 'name' => 'Apple', 'category' => 'fruit']]));
+
+    expect($out['results'][0]['group'])->toBe('FRUIT');
+});

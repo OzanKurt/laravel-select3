@@ -22,6 +22,13 @@ class Builder implements Htmlable, Stringable
     protected ?int $maxItems = null;
     protected ?string $theme = null;
     protected ?string $locale = null;
+    protected bool $fuzzy = false;
+    protected bool $searchGroups = false;
+    protected ?int $debounce = null;
+    protected ?int $minChars = null;
+    protected ?int $maxRender = null;
+    /** @var list<string>|null */
+    protected ?array $searchField = null;
     protected bool $required = false;
     protected ?string $id = null;
 
@@ -74,6 +81,43 @@ class Builder implements Htmlable, Stringable
     public function maxItems(?int $n): static
     {
         $this->maxItems = $n;
+        return $this;
+    }
+
+    public function fuzzy(bool $on = true): static
+    {
+        $this->fuzzy = $on;
+        return $this;
+    }
+
+    public function searchGroups(bool $on = true): static
+    {
+        $this->searchGroups = $on;
+        return $this;
+    }
+
+    public function debounce(?int $ms): static
+    {
+        $this->debounce = $ms;
+        return $this;
+    }
+
+    public function minChars(?int $n): static
+    {
+        $this->minChars = $n;
+        return $this;
+    }
+
+    public function maxRender(?int $n): static
+    {
+        $this->maxRender = $n;
+        return $this;
+    }
+
+    /** @param list<string> $fields */
+    public function searchField(array $fields): static
+    {
+        $this->searchField = $fields;
         return $this;
     }
 
@@ -189,6 +233,12 @@ class Builder implements Htmlable, Stringable
             'maxItems' => $this->maxItems,
             'theme' => $this->theme,
             'locale' => $this->locale,
+            'fuzzy' => $this->fuzzy ?: null,
+            'searchGroups' => $this->searchGroups ?: null,
+            'debounce' => $this->debounce,
+            'minChars' => $this->minChars,
+            'maxRender' => $this->maxRender,
+            'searchField' => $this->searchField,
         ];
 
         // User-supplied config() overrides the built-ins (array_merge, not +).
