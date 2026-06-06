@@ -24,7 +24,10 @@ class Select3 extends Component
         public array $config = [],
     ) {}
 
-    public function render(): HtmlString
+    // No declared return type: Laravel's Component::render() contract is
+    // string|View|Closure across versions; an HtmlString (Htmlable) is rendered
+    // verbatim by resolveView() without re-compiling the markup as a template.
+    public function render()
     {
         $builder = Builder::make($this->name)
             ->multiple($this->multiple)

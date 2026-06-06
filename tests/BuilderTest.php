@@ -75,3 +75,58 @@ it('serializes select3 options into data-s3-config json', function () {
         'theme' => 'bootstrap5',
     ]);
 });
+
+it('does not double-append [] when the name already ends in []', function () {
+    $html = Builder::make('roles[]')->multiple()->toHtml();
+    expect($html)->toContain('name="roles[]"')->not->toContain('roles[][]');
+    expect($html)->toContain('id="roles"');
+});
+
+it('includes an empty placeholder option for single-selects only', function () {
+    $single = Builder::make('t')->placeholder('Pick')->options(['a' => 'A'])->toHtml();
+    $multi = Builder::make('t')->multiple()->placeholder('Pick')->options(['a' => 'A'])->toHtml();
+    expect($single)->toContain('<option value=""></option>');
+    expect($multi)->not->toContain('<option value=""></option>');
+});
+
+it('builds options from a model query via fromModel with extra data', function () {
+    $query = new class {
+        public function get()
+        {
+            return collect([
+                (object) ['id' => 1, 'name' => 'Ann', 'role' => 'Admin'],
+                (object) ['id' => 2, 'name' => 'Bob', 'role' => 'User'],
+            ]);
+        }
+    };
+
+    $html = Builder::make('user')->fromModel($query, 'name', 'id', fn ($m) => ['badge' => $m->role])->toHtml();
+
+    expect($html)
+        ->toContain('<option value="1" data-badge="Admin">Ann</option>')
+        ->toContain('<option value="2" data-badge="User">Bob</option>');
+});
+
+it('lets config() override built-in keys', function () {
+    $html = Builder::make('c')->searchable(true)->config(['searchable' => false])->toHtml();
+    preg_match('/data-s3-config="([^"]*)"/', $html, $m);
+    $cfg = json_decode(html_entity_decode($m[1], ENT_QUOTES), true);
+    expect($cfg['searchable'])->toBeFalse();
+});
+
+it('emits ajax, required, a custom id, and extra attributes', function () {
+    $html = Builder::make('c')
+        ->ajax('/search')->required()->id('my-id')->attrs(['data-x' => '1'])
+        ->toHtml();
+
+    expect($html)
+        ->toContain('data-ajax="/search"')
+        ->toContain(' required')
+        ->toContain('id="my-id"')
+        ->toContain('data-x="1"');
+});
+
+it('renders a disabled option', function () {
+    $html = Builder::make('c')->option('a', 'A', ['disabled' => true])->toHtml();
+    expect($html)->toContain('<option value="a" disabled>A</option>');
+});

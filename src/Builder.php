@@ -191,14 +191,19 @@ class Builder implements Htmlable, Stringable
             'locale' => $this->locale,
         ];
 
-        return array_filter($base + $this->config, static fn ($v) => $v !== null);
+        // User-supplied config() overrides the built-ins (array_merge, not +).
+        return array_filter(array_merge($base, $this->config), static fn ($v) => $v !== null);
     }
 
     public function toHtml(): string
     {
+        // Normalize a name that already ends in [] so multi-selects don't become
+        // name="x[][]" (which PHP would parse as a nested array). The id mirrors
+        // the bare name (square brackets are invalid in an HTML id / CSS selector).
+        $base = preg_replace('/\[\]$/', '', $this->name) ?? $this->name;
         $attrs = [
-            'name' => $this->name . ($this->multiple ? '[]' : ''),
-            'id' => $this->id ?? $this->name,
+            'name' => $base . ($this->multiple ? '[]' : ''),
+            'id' => $this->id ?? $base,
             'class' => 'form-control',
             'data-select3' => '',
             'data-s3-config' => json_encode($this->toConfig(), JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE),

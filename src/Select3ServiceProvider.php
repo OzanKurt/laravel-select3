@@ -15,8 +15,6 @@ class Select3ServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
-        $this->loadViewsFrom(__DIR__ . '/../resources/views', 'select3');
-
         if ($this->app->runningInConsole()) {
             $this->publishes([
                 __DIR__ . '/../config/select3.php' => $this->app->configPath('select3.php'),

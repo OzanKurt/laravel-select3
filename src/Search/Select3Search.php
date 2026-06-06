@@ -70,13 +70,20 @@ class Select3Search
      */
     public function get(string $q = '', int $page = 1): array
     {
+        if (! is_object($this->query)) {
+            throw new \InvalidArgumentException('Select3Search::get() requires an Eloquent builder or relation.');
+        }
+
         $query = clone $this->query;
         $q = trim($q);
 
         if ($q !== '' && $this->searchable !== []) {
-            $query->where(function ($sub) use ($q): void {
+            // Escape LIKE wildcards so a query of "%" or "_" can't broaden the
+            // match to every row (default escape char "\" works on MySQL/PgSQL/SQLite).
+            $escaped = str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $q);
+            $query->where(function ($sub) use ($escaped): void {
                 foreach ($this->searchable as $column) {
-                    $sub->orWhere($column, 'like', '%' . $q . '%');
+                    $sub->orWhere($column, 'like', '%' . $escaped . '%');
                 }
             });
         }
