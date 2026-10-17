@@ -14,4 +14,14 @@ class Select3
     {
         return Builder::make($name);
     }
+
+    /**
+     * A searchable, region-grouped timezone picker.
+     *
+     *   echo Select3::timezones('timezone')->pin('inherit', 'Same as Acme (Europe/London)');
+     */
+    public static function timezones(string $name = 'timezone'): Builder
+    {
+        return Builder::make($name)->timezones();
+    }
 }

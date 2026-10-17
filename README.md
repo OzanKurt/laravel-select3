@@ -66,6 +66,24 @@ Renders a native `<select data-select3 data-s3-config="{…}">` with `<option>`s
 carrying `data-icon` / `data-image` / `data-description` / `data-badge`, grouped
 into `<optgroup>`s.
 
+Option arrays also accept `meta` (right-aligned secondary text), `pinned` (list above every group) and a `data` map of extra `data-*` attributes, e.g. `['data' => ['keywords' => 'uk gb']]`.
+
+### Timezone picker
+
+A searchable timezone select, grouped by region, with each city's current UTC offset on the right and an optional pinned default:
+
+```php
+echo Select3::timezones('timezone')
+    ->pin('inherit', 'Same as Acme (Europe/London)')
+    ->selected($user->timezone ?? 'inherit');
+```
+
+Search matches the city, region, identifier (`Europe/London`), offsets (`+03:00`, `UTC+03:00`) and abbreviations such as `BST`. Offsets are computed for now, so they follow daylight saving. Limit regions or pick the moment with `->timezones(['Europe', 'Asia'], $at)`. The raw rows are available from `Ozankurt\Select3\Timezones::options()`, which is handy for validation:
+
+```php
+'timezone' => ['required', Rule::in(['inherit', ...DateTimeZone::listIdentifiers()])],
+```
+
 ## Blade component
 
 ```blade
@@ -117,6 +135,8 @@ query are escaped; swap `searchable()` for `fulltext()` to use a FULLTEXT index.
 | `make($name)` | Create a builder. |
 | `options($array)` / `option($value, $label, $extra)` | Add options (assoc map or option arrays). |
 | `fromModel($query, $label, $value, $extra)` | Build options from an Eloquent query/class. |
+| `timezones($regions, $at)` | Fill with region-grouped IANA timezones; `Select3::timezones($name)` is a shortcut. |
+| `pin($value, $label, $extra)` · `pinned($value\|$array)` | Add a pinned option / pin existing values above every group. |
 | `selected($value\|$array)` | Preselect value(s). |
 | `multiple()` · `tags()` · `searchable()` · `required()` | Toggle flags. |
 | `placeholder()` · `id()` · `theme()` · `locale()` | Display + i18n. |

@@ -169,9 +169,55 @@ class Builder implements Htmlable, Stringable
     }
 
     /**
+     * Pin existing option values above every optgroup, in the given order.
+     *
+     * @param  string|int|list<string|int>  $values
+     */
+    public function pinned(string|int|array $values): static
+    {
+        $current = $this->config['pinned'] ?? [];
+        foreach ((array) $values as $v) {
+            $current[] = (string) $v;
+        }
+        $this->config['pinned'] = array_values(array_unique($current));
+        return $this;
+    }
+
+    /**
+     * Add an option pinned above every optgroup, e.g. an "inherit" default:
+     *   ->pin('inherit', 'Same as Acme (Europe/London)')
+     *
+     * @param  array<string,mixed>  $extra
+     */
+    public function pin(string $value, string $label, array $extra = []): static
+    {
+        // Ungrouped and listed first so the native <select> (and the no-JS or
+        // mobile fallback) also shows it at the top.
+        $this->option($value, $label, ['pinned' => true, 'group' => null] + $extra);
+        array_unshift($this->options, array_pop($this->options));
+        return $this;
+    }
+
+    /**
+     * Fill the select with every IANA timezone, grouped by region, with the UTC
+     * offset as meta text. Search matches the city, region, identifier,
+     * "UTC+03:00" style offsets and abbreviations such as "BST".
+     *
+     * @param  list<string>|null  $regions  Limit to these regions (e.g. ['Europe']).
+     */
+    public function timezones(?array $regions = null, ?\DateTimeInterface $at = null): static
+    {
+        $this->options(Timezones::options($regions, $at));
+        $this->searchField ??= ['label', 'meta', 'keywords'];
+        $this->searchGroups = true;
+        return $this;
+    }
+
+    /**
      * Add options. Accepts an associative [value => label] map, or a list of
      * arrays each carrying value + label and optional
-     * icon/image/description/badge/disabled/group.
+     * icon/image/description/badge/meta/pinned/disabled/group, plus a `data`
+     * map of extra data-* attributes (e.g. ['keywords' => 'uk gb']).
      */
     public function options(array $options): static
     {
@@ -197,8 +243,11 @@ class Builder implements Htmlable, Stringable
             'image' => $extra['image'] ?? null,
             'description' => $extra['description'] ?? null,
             'badge' => $extra['badge'] ?? null,
+            'meta' => $extra['meta'] ?? null,
+            'pinned' => (bool) ($extra['pinned'] ?? false),
             'disabled' => (bool) ($extra['disabled'] ?? false),
             'group' => $extra['group'] ?? null,
+            'data' => (array) ($extra['data'] ?? []),
         ];
         return $this;
     }
@@ -309,10 +358,19 @@ class Builder implements Htmlable, Stringable
     protected function optionHtml(array $o): string
     {
         $attrs = ['value' => (string) $o['value']];
-        foreach (['icon', 'image', 'description', 'badge'] as $key) {
+        foreach (['icon', 'image', 'description', 'badge', 'meta'] as $key) {
             if (! empty($o[$key])) {
                 $attrs['data-' . $key] = (string) $o[$key];
             }
+        }
+        foreach ($o['data'] ?? [] as $key => $value) {
+            // Only safe attribute-name characters; values are escaped by attrString().
+            if (preg_match('/^[a-z][a-z0-9-]*$/', (string) $key) === 1 && $value !== null && $value !== '') {
+                $attrs['data-' . $key] = (string) $value;
+            }
+        }
+        if (! empty($o['pinned'])) {
+            $attrs['data-pinned'] = '';
         }
         if (! empty($o['disabled'])) {
             $attrs['disabled'] = '';
