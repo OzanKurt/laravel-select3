@@ -32,7 +32,7 @@ composer require ozankurt/laravel-select3
 php artisan vendor:publish --tag=select3-config   # optional: config/select3.php
 ```
 
-Requires the JS side installed and enhanced (see [`@ozankurt/select3`](https://github.com/OzanKurt/select3)).
+Requires the JS side installed and enhanced (see [`@ozankurt/select3`](https://github.com/OzanKurt/select3)). Timezones, `meta` and pinned options need `@ozankurt/select3` 1.1.0 or newer.
 Auto-discovery registers the service provider and the `<x-select3>` component.
 
 ## Fluent builder
